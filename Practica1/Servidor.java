@@ -64,13 +64,17 @@ public class Servidor {
     public String validaJugada(String jugada){
         if(this.tablero.get(jugada)!=null){
             if(this.minas.get(jugada)==null){
-                casillas=casillas-1;
-                this.tablero.replace(jugada,"D");
-                if(casillas==0)
-                {
-                    return "Has ganado el juego\nHasta luego";
+                if(this.tablero.get(jugada).equals("D")){
+                    return "Escoge una casilla que no este desbloqueada";
+                }else{
+                    casillas=casillas-1;
+                    this.tablero.replace(jugada,"D");
+                    if(casillas==0)
+                    {
+                        return "Has ganado el juego\nHasta luego";
+                    }
+                    return "Desbloqueaste una casilla";
                 }
-                return "Desbloqueaste una casilla";
             }else{
                 return "Explotaste una mina\nGame Over\nHasta luego";
             }
