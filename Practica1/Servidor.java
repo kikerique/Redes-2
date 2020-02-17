@@ -14,15 +14,18 @@ import java.net.InetAddress;
 public class Servidor {
     HashMap<String,String> tablero;
     HashMap<String,String> minas;
+    int casillas=0;
     public void creaMatriz(String dificultad){
         int ancho=0,ganadoras=0;
         Double r=0.0;
         if(dificultad.equals("1")){
             ancho=9;
             ganadoras=10;
+            casillas=(ancho*ancho)-ganadoras;
         }else{
             ancho=16;
             ganadoras=40;
+            casillas=(ancho*ancho)-ganadoras;
         }
         this.tablero=new HashMap<>(ancho*ancho);
         this.minas=new HashMap<>(ganadoras);
@@ -61,10 +64,15 @@ public class Servidor {
     public String validaJugada(String jugada){
         if(this.tablero.get(jugada)!=null){
             if(this.minas.get(jugada)==null){
+                casillas=casillas-1;
                 this.tablero.replace(jugada,"D");
+                if(casillas==0)
+                {
+                    return "Has ganado el juego\nHasta luego";
+                }
                 return "Desbloqueaste una casilla";
             }else{
-                return "Explotaste una mina\n Game Over\nHasta luego";
+                return "Explotaste una mina\nGame Over\nHasta luego";
             }
         }
         return "Casilla Invalida";
@@ -108,11 +116,17 @@ public class Servidor {
                 imprimeTablero(p,dificultad);
                 p.println("Ingresa la casilla que quieres jugar (ejemplo a0): ");
                 mensaje=b.readLine();
-                if ( mensaje.equals("by")) {
+                if (mensaje.equals("by")) {
                     p.println("Hasta luego");
                     break;
                 }else{
-                    p.println(validaJugada(mensaje));
+                    mensaje=validaJugada(mensaje);
+                    if(mensaje.equals("Explotaste una mina\nGame Over\nHasta luego") || mensaje.equals("Has ganado el juego\nHasta luego"))
+                    {
+                        p.println(mensaje);
+                        break;
+                    }
+                    p.println(mensaje);
                 }
             }
 
