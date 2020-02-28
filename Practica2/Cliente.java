@@ -27,14 +27,13 @@ public class Cliente {
 
             //Creo una conexion al socket servidor
             s = new Socket (HOST,PORT);
+            s.setSoTimeout(3*1000);
 
             //Creo las referencias al canal de escritura y lectura del socket
             p = new PrintStream (s.getOutputStream());
             b = new BufferedReader  ( new InputStreamReader  ( s.getInputStream() ) );
-
             while ( true ) {
-                //Espero la respuesta por el canal de lectura
-                respuesta = b.readLine();
+                respuesta=b.readLine();
                 System .out.println(respuesta);
                 //System.out.println(respuesta.equals("2.-Experto"));
                 if (respuesta.equals("Hasta luego")) {
@@ -47,11 +46,14 @@ public class Cliente {
             p.close();
             b.close();
             s.close();
+        }catch ( java.net.SocketTimeoutException e){
+            System.out.println("El servidor no acepta conexiones por el momento");
 
         } catch (UnknownHostException  e) {
             System .out.println("No puedo conectarme a " + HOST + ":" + PORT);
         } catch (IOException  e) {
             System .out.println("Error de E/S en " + HOST + ":" + PORT);
         }
+
     }
 }

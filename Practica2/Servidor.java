@@ -10,7 +10,9 @@ public class Servidor {
     
     public void iniciaServer(){
         String HOST="",respuesta="";
-        int PORT=0,numeroConexiones=0;
+        int PORT=0,numeroConexiones=0,conexionesActivas=0;
+        Runnable nuevoCliente;
+        Thread hilo;
         Scanner leer=new Scanner(System.in);
         ServerSocket  s; //Socket servidor
         Socket  sc; //Socket cliente
@@ -28,12 +30,18 @@ public class Servidor {
             System.out.println("Servidor escuchando en el puerto: "+s.getLocalPort());
 
             while ( true ) {
-                //Invoco el metodo accept del socket servidor, me devuelve una referencia al socket cliente
-                sc = s.accept();
-                //Instanciamos a la clase hiloServidor para crear un nuevo hilo que atenderá al cliente
-                Runnable nuevoCliente = new hiloServidor(sc);
-                Thread hilo = new Thread(nuevoCliente);
-                hilo.start();     
+                    //Invoco el metodo accept del socket servidor, me devuelve una referencia al socket cliente
+                    sc = s.accept();
+                    //Instanciamos a la clase hiloServidor para crear un nuevo hilo que atenderá al cliente
+                    nuevoCliente = new hiloServidor(sc);
+                    hilo = new Thread(nuevoCliente);
+                    //hilo.start();
+                    System.out.println("gg: " +hilo.activeCount());
+                    conexionesActivas=hilo.activeCount();
+                    if((conexionesActivas-1)<numeroConexiones){
+                        hilo.start();
+                    }
+                    //conexionesActivas--; 
             }
             
         } catch (IOException  e) {

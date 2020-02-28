@@ -17,7 +17,6 @@ public class hiloServidor implements Runnable{
     int casillas=0;
 	
 	public hiloServidor(Socket socket){
-
 		this.cliente=socket;
 	}
 	
