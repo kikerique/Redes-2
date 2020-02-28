@@ -6,6 +6,7 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Arrays;
 import java.net.Socket;
+import java.time.LocalDateTime;
 
 public class hiloServidor implements Runnable{
 	String dificultad="",mensaje="";
@@ -15,6 +16,7 @@ public class hiloServidor implements Runnable{
     HashMap<String,String> tablero; //Tablero del juego
     HashMap<String,String> minas; //Posición de las minas dentro del tablero
     int casillas=0;
+    LocalDateTime inicio,fin;
 	
 	public hiloServidor(Socket socket){
 		this.cliente=socket;
@@ -95,6 +97,7 @@ public class hiloServidor implements Runnable{
 	        p.println("Ingresa la dificultad\n1.-Principiante\n2.-Experto\nQ.-Salir");
 	        //Leo lo que escribio el socket cliente en el canal de lectura
 	        dificultad = b.readLine();
+	        inicio = LocalDateTime.now();
 	        creaMatriz(dificultad);
 	        System.out.println("Aqui estan las minas:\n"+Arrays.asList(minas));
 			while (true){
@@ -102,6 +105,8 @@ public class hiloServidor implements Runnable{
 	            p.println("Ingresa la casilla que quieres jugar (ejemplo a0): ");
 	            mensaje=b.readLine();
 	            if (mensaje.equals("by")) {
+	            	fin=LocalDateTime.now();
+	            	p.println("Duración de la partida (HH:MM:SS): "+(fin.getHour()-inicio.getHour())+":"+(fin.getMinute()-inicio.getMinute())+":"+(fin.getSecond()-inicio.getSecond()));
 	                p.println("Hasta luego");
 	                break;
 	            }else{
@@ -109,6 +114,7 @@ public class hiloServidor implements Runnable{
 	                if(mensaje.equals("Explotaste una mina\nGame Over\nHasta luego") || mensaje.equals("Has ganado el juego\nHasta luego"))
 	                {
 	                    p.println(mensaje);
+	                    p.println("Duración de la partida (HH:MM:SS): "+(fin.getHour()-inicio.getHour())+":"+(fin.getMinute()-inicio.getMinute())+":"+(fin.getSecond()-inicio.getSecond()));
 	                    break;
 	                }
 	                p.println(mensaje);
