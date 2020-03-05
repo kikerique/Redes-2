@@ -5,50 +5,37 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.net.Socket;
 import java.time.LocalDateTime;
+import java.lang.Thread;
 
-public class hiloServidor implements Runnable{
-	String dificultad="",mensaje="";
+public class hiloServidor implements Runnable {
+	String mensaje="",dificultad="";
 	PrintStream  p; //Canal de escritura
     BufferedReader  b; //Canal de Lectura
     Socket  cliente; //Socket cliente
-    HashMap<String,String> tablero; //Tablero del juego
-    HashMap<String,String> minas; //Posición de las minas dentro del tablero
-    int casillas=0;
     LocalDateTime inicio,fin;
+    int casillas=0,jugadores=0;
+    tablero tab;
+    ThreadGroup grupo;
 	
-	public hiloServidor(Socket socket){
+	public hiloServidor(Socket socket,String d,tablero t,ThreadGroup g){
 		this.cliente=socket;
+		this.tab=t;
+		this.dificultad=d;
+        this.casillas=tab.casillas;
+        this.grupo=g;
+        try{
+            this.b = new BufferedReader ( new InputStreamReader  ( cliente.getInputStream() ) );
+            this.p = new PrintStream  ( cliente.getOutputStream() );
+        }catch(IOException e){
+            System.out.println(e.getMessage());
+        }
 	}
 	
-    public void creaMatriz(String dificultad){
-        int ancho=0,ganadoras=0;
-        Double r=0.0;
-        if(dificultad.equals("1")){
-            ancho=9;
-            ganadoras=10;
-            casillas=(ancho*ancho)-ganadoras;
-        }else{
-            ancho=16;
-            ganadoras=40;
-            casillas=(ancho*ancho)-ganadoras;
-        }
-        this.tablero=new HashMap<>(ancho*ancho);
-        this.minas=new HashMap<>(ganadoras);
-        for(int i=97;i<97+ancho;i++){
-            for(int j=0;j<ancho;j++){
-                r=Math.random();
-                if((r>0.5 && r<0.7) && ganadoras>0){
-                    ganadoras=ganadoras-1;
-                    this.minas.put(Character.toString((char) i)+Integer.toString(j),"Mina");
-                }
-                this.tablero.put(Character.toString((char) i)+Integer.toString(j),"V");
-            }
-        }
-        
-    }
-    public void imprimeTablero(PrintStream p, String dificultad){
+    
+    public void imprimeTablero(){
         int ancho=0;
         if(dificultad.equals("1")){
             ancho=9;
@@ -63,71 +50,130 @@ public class hiloServidor implements Runnable{
         for(int j=0;j<ancho;j++){
             p.print("\n"+j+" ");
             for(int i=97;i<97+ancho;i++){
-                p.print(this.tablero.get(Character.toString((char) i)+Integer.toString(j))+"\t");
+                p.print(tab.tablero.get(Character.toString((char) i)+Integer.toString(j))+"\t");
             }
             p.println();
         }
+        //p.print(imprime);
+        //p.println();
     }
     public String validaJugada(String jugada){
-        if(this.tablero.get(jugada)!=null){
-            if(this.minas.get(jugada)==null){
-                if(this.tablero.get(jugada).equals("D")){
-                    return "Escoge una casilla que no este desbloqueada";
+        if(this.tab.tablero.get(jugada)!=null){
+            if(this.tab.minas.get(jugada)==null){
+                if(this.tab.tablero.get(jugada).equals("D")){
+                    this.tab.tablero.notify();
+                    return "Escoge una casilla que no este desbloqueada,has perdido el turno";
                 }else{
                     casillas=casillas-1;
-                    this.tablero.replace(jugada,"D");
+                    this.tab.setTablero(jugada,"D");
+                    this.tab.tablero.notify();
                     if(casillas==0)
                     {
-                        return "Has ganado el juego\nHasta luego";
+                        return "Has ganado el juego";
                     }
                     return "Desbloqueaste una casilla";
                 }
             }else{
-                return "Explotaste una mina\nGame Over\nHasta luego";
+                if(this.tab.tablero.get(jugada).equals("M")){
+                    this.tab.tablero.notify();
+                    return "Escoge una casilla que no este desbloqueada,has perdido el turno";
+                }else{
+                    this.tab.setTablero(jugada,"M");
+                    this.tab.tablero.notify();
+                    return "Explotaste una mina\nGame Over";
+                }
+                
             }
         }
         return "Casilla Invalida";
 
     }
+    public boolean checaJuegoTerminado(){
+        Iterator it = tab.tablero.values().iterator();
+        int min=0,vacios=0,desbloqueados=0;
+        while (it.hasNext()) {
+            String valor = it.next().toString();
+            if(valor.equals("M")){
+                min++;
+            }
+            if(valor.equals("V")){
+                vacios++;
+            }
+            //it.remove(); // avoids a ConcurrentModificationException
+        }
+        if(tab.dificultad.equals("1")){
+            if(min==10){
+                p.println("Todas las minas han sido explotadas\nJuego Terminado");
+                return true;
+            }
+            if(vacios==0){
+                p.println("Todas las casillas han sido desbloqueadas\nJuego Terminado");
+                return true;
+            }
+            return false;
+        }
+        if(tab.dificultad.equals("2")){
+            if(min==40){
+                p.println("Todas las minas han sido explotadas\nJuego Terminado");
+                return true;
+            }
+            if(vacios==0){
+                p.println("Todas las casillas han sido desbloqueadas\nJuego Terminado");
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
 	public void run(){
-		try{
-			b = new BufferedReader ( new InputStreamReader  (this.cliente.getInputStream()));
-        	p = new PrintStream  ( this.cliente.getOutputStream() );
-			p.println("Bienvenido Usuario: " + this.cliente.getLocalSocketAddress().toString());
-	        p.println("Ingresa la dificultad\n1.-Principiante\n2.-Experto\nQ.-Salir");
-	        //Leo lo que escribio el socket cliente en el canal de lectura
-	        dificultad = b.readLine();
-	        inicio = LocalDateTime.now();
-	        creaMatriz(dificultad);
-	        System.out.println("Aqui estan las minas:\n"+Arrays.asList(minas));
-			while (true){
-				imprimeTablero(p,dificultad);
-	            p.println("Ingresa la casilla que quieres jugar (ejemplo a0): ");
-	            mensaje=b.readLine();
-	            if (mensaje.equals("by")) {
-	            	fin=LocalDateTime.now();
-	            	p.println("Duración de la partida (HH:MM:SS): "+(fin.getHour()-inicio.getHour())+":"+(fin.getMinute()-inicio.getMinute())+":"+(fin.getSecond()-inicio.getSecond()));
-	                p.println("Hasta luego");
-	                break;
-	            }else{
-	                mensaje=validaJugada(mensaje);
-	                if(mensaje.equals("Explotaste una mina\nGame Over\nHasta luego") || mensaje.equals("Has ganado el juego\nHasta luego"))
-	                {
-	                    p.println(mensaje);
-	                    p.println("Duración de la partida (HH:MM:SS): "+(fin.getHour()-inicio.getHour())+":"+(fin.getMinute()-inicio.getMinute())+":"+(fin.getSecond()-inicio.getSecond()));
-	                    break;
-	                }
-	                p.println(mensaje);
-	            }
-			}
-			p.close();
-	        b.close();
-	        this.cliente.close();
-    	}catch(IOException e){
-    		System.out.println(e.toString());
-            System .out.println("No puedo crear el socket");
-    	}
+        //tab.addObserver(this);
+        //imprimeTablero(tab.getTablero().toString());
+        p.println("Bienvenido Espera tu turno\n");
+        jugadores=grupo.activeCount();
+        	try{
+        	    inicio = LocalDateTime.now();
+            	while (true){
+                    synchronized(tab.tablero){
+                        if(checaJuegoTerminado()){
+                            tab.tablero.notify();
+                            break;
+                        }
+                        imprimeTablero();
+                	    p.println("Ingresa la casilla que quieres jugar (ejemplo a0): ");
+                	    mensaje=b.readLine();
+                	    if (mensaje.equals("by")) {
+                	        fin=LocalDateTime.now();
+                	        p.println("Duración de la partida (HH:MM:SS): "+(fin.getHour()-inicio.getHour())+":"+(fin.getMinute()-inicio.getMinute())+":"+(fin.getSecond()-inicio.getSecond()));
+                            tab.tablero.notify();
+                	        break;
+                	    }else{
+                	        mensaje=validaJugada(mensaje);
+                	        if(mensaje.equals("Explotaste una mina\nGame Over") || mensaje.equals("Has ganado el juego"))
+                	        {
+                                p.println("Duración de la partida (HH:MM:SS): "+(fin.getHour()-inicio.getHour())+":"+(fin.getMinute()-inicio.getMinute())+":"+(fin.getSecond()-inicio.getSecond()));
+                	            p.println(mensaje);
+                                tab.tablero.notify();
+                                break;
+                	        }
+                	        p.println(mensaje);
+                            if(jugadores>1){
+                                tab.tablero.wait();
+                            }
+                            //System.out.println("Esto hay activo:"+this.activeCount());
+                	    }
+                    }
+                    //break;
+            	}
+                p.println("Hasta luego");
+        	    p.close();
+        	    b.close();
+        	    this.cliente.close();
+            }catch(InterruptedException e){
+                System.out.println(e.toString());
+            }catch(IOException e){
+            	System.out.println(e.toString());
+                System .out.println("No puedo crear el socket");
+        	}
 	}
-	
 
 }
