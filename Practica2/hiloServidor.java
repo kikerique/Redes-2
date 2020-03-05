@@ -156,7 +156,7 @@ public class hiloServidor implements Runnable {
                                 break;
                 	        }
                 	        p.println(mensaje);
-                            if(jugadores>1){
+                            if(jugadores>=1){
                                 tab.tablero.wait();
                             }
                             //System.out.println("Esto hay activo:"+this.activeCount());
