@@ -65,9 +65,8 @@ public class hiloServidor implements Runnable {
                 if(this.tab.tablero.get(jugada).equals("D")){
                     return "Escoge una casilla que no este desbloqueada,has perdido el turno";
                 }else{
-                    casillas=casillas-1;
                     this.tab.setTablero(jugada,"D");
-                    if(casillas==0)
+                    if(checaJuegoTerminado())
                     {
                         return "Has ganado el juego";
                     }
@@ -104,7 +103,7 @@ public class hiloServidor implements Runnable {
                 p.println("Todas las minas han sido explotadas\nJuego Terminado");
                 return true;
             }
-            if(vacios==min){
+            if((vacios+min)==10){
                 p.println("Todas las casillas han sido desbloqueadas\nJuego Terminado");
                 return true;
             }
@@ -115,7 +114,7 @@ public class hiloServidor implements Runnable {
                 p.println("Todas las minas han sido explotadas\nJuego Terminado");
                 return true;
             }
-            if(vacios==min){
+            if((vacios+min)==40){
                 p.println("Todas las casillas han sido desbloqueadas\nJuego Terminado");
                 return true;
             }
@@ -127,26 +126,26 @@ public class hiloServidor implements Runnable {
         //tab.addObserver(this);
         //imprimeTablero(tab.getTablero().toString());
         p.println("Bienvenido Espera tu turno\n");
-        jugadores=grupo.activeCount();
         try{
         	inicio = LocalDateTime.now();
             while (true){
                 synchronized(tab.tablero){
-                    if(grupo.activeCount()<numJugadores && bandera==false){
+                    if(grupo.activeCount()<numJugadores && bandera!=true){
                         p.println("Esperando a todos los jugadores");
                         p.println("Jugadores actualmente conectados: "+grupo.activeCount());
                         p.println("Jugadores necesarios para el inicio del juego: "+numJugadores);
-                        tab.tablero.wait();
-                        tab.tablero.notify();
-                    }
-                    if(grupo.activeCount()==numJugadores && numJugadores>1){
-                        System.out.println("Ahora si");
                         bandera=true;
+                        tab.tablero.wait();
+                        //tab.tablero.notify();
+                    }
+                    if((grupo.activeCount()==numJugadores && numJugadores>1) && bandera==false){
+                        p.println("Hay un jugador antes que tu, por favor espera tu turno");
                         tab.tablero.notify();
+                        bandera=true;
                         tab.tablero.wait();
                     }
                     //tab.tablero.notify();
-                    if(checaJuegoTerminado()){
+                    if(checaJuegoTerminado()){ 
                         tab.tablero.notify();
                         break;
                     }
@@ -157,7 +156,6 @@ public class hiloServidor implements Runnable {
                     	fin=LocalDateTime.now();
                     	p.println("Duración de la partida (HH:MM:SS): "+(fin.getHour()-inicio.getHour())+":"+(fin.getMinute()-inicio.getMinute())+":"+(fin.getSecond()-inicio.getSecond()));
                         tab.tablero.notify();
-                        p.println("Hasta luego");
                     	break;
                     }else{
                 	    mensaje=validaJugada(mensaje);
@@ -167,20 +165,19 @@ public class hiloServidor implements Runnable {
                             p.println("Duración de la partida (HH:MM:SS): "+(fin.getHour()-inicio.getHour())+":"+(fin.getMinute()-inicio.getMinute())+":"+(fin.getSecond()-inicio.getSecond()));
                     	    p.println(mensaje);                                
                             tab.tablero.notify();
-                            p.println("Hasta luego");
                             break;
                 	    }
                 	    p.println(mensaje);
                         tab.tablero.notify();
                             //System.out.println("Esto hay activo:"+this.activeCount());
                 	}
-                    if(jugadores>1){
+                    if(grupo.activeCount()>1){
                         tab.tablero.wait();
-                        jugadores=grupo.activeCount();
                     }   
                 }
                     //break;
             }
+            p.println("Hasta luego");
         	p.close();
         	b.close();
         	this.cliente.close();
