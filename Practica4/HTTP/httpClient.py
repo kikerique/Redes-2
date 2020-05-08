@@ -5,12 +5,17 @@ Equipo: Los 4 fantásticos
 """
 import argparse
 import http.client, urllib.parse
-REMOTE_SERVER_HOST = 'localhost:8000'
+import sys
 params = urllib.parse.urlencode({'number':12524, 'type': 'issue', 'action':'show'}).encode() #codifica los parametros de la peticion POST
 headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain"} #Cabeceras para la petición POST
 opc=""
 path=""
-conn = http.client.HTTPConnection(REMOTE_SERVER_HOST) #Instanciamos la clase HTTPConnection en la URL de nuestro servidor
+
+if len(sys.argv)<3:
+     print("Uso ejecutable HOST PORT")
+     sys.exit(1)
+
+conn = http.client.HTTPConnection(sys.argv[1],sys.argv[2]) #Instanciamos la clase HTTPConnection en la URL de nuestro servidor
 
 
 def imprimeRespuesta():

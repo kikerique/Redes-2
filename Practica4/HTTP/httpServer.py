@@ -313,11 +313,19 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         '.h': 'text/plain',
         })
 try:
-    #Instanciamos la clase HTTPServer, establecemos su dirección de HOST y  el PORT junto con la clase que atenderá las peticiones
-    server = HTTPServer(('localhost', 8000), SimpleHTTPRequestHandler) 
-    print("Servidor listo en la direccion: localhost:8000")
-    server.serve_forever()  #Ponemos el servidor en espera de manera indefinida para que acepte las peticiones de los clientes
+    if len(sys.argv)<3:
+        print("Uso ejecutable HOST PORT")
+        sys.exit(1)
+    else:
+        HOST=sys.argv[1]
+        PORT=sys.argv[2]
+        #Instanciamos la clase HTTPServer, establecemos su dirección de HOST y  el PORT junto con la clase que atenderá las peticiones
+        server = HTTPServer((HOST, int(PORT)), SimpleHTTPRequestHandler) 
+        print("Servidor listo en la direccion:",HOST,":",PORT)
+        server.serve_forever()  #Ponemos el servidor en espera de manera indefinida para que acepte las peticiones de los clientes
 
 except KeyboardInterrupt:
     print(' recibido, se cerrara el Servidor')
     server.socket.close() #Cerramos el socket por donde se comunicaba el servidor
+except Exception as e:
+    print(str(e))
