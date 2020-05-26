@@ -19,11 +19,8 @@ def abrirArchivo(nombreArchivo,e):
         archivo=open(str("temp" + e),"wb")
         archivo.write(datos.data)
         archivo.close()
-        subprocess.call(('xdg-open', str("temp"+e)))
-        print("Haz clic para continuar")
-        input()
     else:
-        print(datos)
+        return datos
 
 if len(sys.argv)!=3:
     print("Modo de uso: ejecutable HOST PORT")
@@ -39,8 +36,16 @@ try:
             print("Ingresa la direccion del archivo que quieres leer")
             nombreArchivo=input()
             n,e=os.path.splitext(nombreArchivo)
-            abrirArchivo(nombreArchivo,e)
-            os.remove(str("temp"+e))
+            prueba=abrirArchivo(nombreArchivo,e)
+            if not(isinstance(prueba,str)):
+            	subprocess.call(('xdg-open', str("temp"+e)))
+            	input("Haz clic para continuar")
+            	try:
+                	os.remove(str("temp"+e))
+            	except:
+                	pass
+            else:
+            	print(prueba)
         if opc=="2":
             print("Ingresa el nombre del archivo que quieres subir")
             nombreArchivo=input()
@@ -56,14 +61,22 @@ try:
             print("Ingresa la direccion del archivo que quieres modificar")
             nombreArchivo=input()
             n,e=os.path.splitext(nombreArchivo)
-            abrirArchivo(nombreArchivo,e)
-            sha=getsha256file("temp"+e)
-            if sha!=getsha256file("temp"+e):
-                with open(str("temp"+e),"rb") as archivo:
-                    print(s.escribir(nombreArchivo,archivo.read()))
-            else:
-                print("El archivo no sufrio ningun cambio")
-            os.remove(str("temp"+e))
+            prueba=abrirArchivo(nombreArchivo,e)
+            if not(isinstance(prueba,str)):
+	            sha=getsha256file("temp"+e)
+	            subprocess.call(('xdg-open', str("temp"+e)))
+	            input("Haz clic para continuar")
+	            if sha!=getsha256file("temp"+e):
+	                with open(str("temp"+e),"rb") as archivo:
+	                    print(s.escribir(nombreArchivo,archivo.read()))
+	            else:
+	                print("El archivo no sufrio ningun cambio")
+	            try:
+	                os.remove(str("temp"+e))
+	            except:
+	                pass
+	        else:
+	        	print(prueba)
         if opc=="4":
             print("Ingresa la direccion del archivo que quieres eliminar")
             print(s.eliminarArchivo(input()))
