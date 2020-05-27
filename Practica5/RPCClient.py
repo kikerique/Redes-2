@@ -14,9 +14,9 @@ def getsha256file(archivo):
         print("Error: %s" % (e))
         return ""
 def abrirArchivo(nombreArchivo,e):
-    datos=s.leer(nombreArchivo+e)
+    datos=s.leer(nombreArchivo)
     if not(isinstance(datos,str)):
-        archivo=open(str(nombreArchivo + e),"wb")
+        archivo=open(str("temp" + e),"wb")
         archivo.write(datos.data)
         archivo.close()
     else:
@@ -36,16 +36,18 @@ try:
             print("Ingresa la direccion del archivo que quieres leer")
             nombreArchivo=input()
             n,e=os.path.splitext(nombreArchivo)
-            prueba=abrirArchivo(n,e)
+            prueba=abrirArchivo(nombreArchivo,e)
             if not(isinstance(prueba,str)):
-            	subprocess.call(('xdg-open', str(n+e)))
-            	input("Presiona enter para continuar")
-            	decision=input("Desea guardar el archivo? S/N: ").lower()
-            	if not(decision=="s"):
-	            	try:
-	                	os.remove(str(n+e))
-	            	except:
-	                	pass
+                subprocess.call(('xdg-open', str("temp"+e)))
+                input("Haz clic para continuar")
+                if not(input("Deseas guardar el archivo? S/N: ").lower()=="s"):
+                    try:
+                        os.remove(str("temp"+e))
+                    except:
+                        pass
+                else:
+                    nombre=input("Ingresa el nombre con el que guardaras el archivo: ")
+                    os.rename(str("temp"+e),str(nombre+e))
             else:
             	print(prueba)
         if opc=="2":
@@ -63,18 +65,18 @@ try:
             print("Ingresa la direccion del archivo que quieres modificar")
             nombreArchivo=input()
             n,e=os.path.splitext(nombreArchivo)
-            prueba=abrirArchivo(n,e)
+            prueba=abrirArchivo(nombreArchivo,e)
             if not(isinstance(prueba,str)):
-                sha=getsha256file(n+e)
-                subprocess.call(('xdg-open', str(n+e)))
+                sha=getsha256file("temp"+e)
+                subprocess.call(('xdg-open', str("temp"+e)))
                 input("Haz clic para continuar")
-                if sha!=getsha256file(n+e):
-                    with open(str(n+e),"rb") as archivo:
-                        print(s.escribir(str(n+e),archivo.read()))
+                if sha!=getsha256file("temp"+e):
+                    with open(str("temp"+e),"rb") as archivo:
+                        print(s.escribir(nombreArchivo,archivo.read()))
                 else:
                     print("El archivo no sufrio ningun cambio")
                 try:
-                    os.remove(str(n+e))
+                    os.remove(str("temp"+e))
                 except:
                     pass
             else:
