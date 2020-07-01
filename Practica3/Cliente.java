@@ -33,7 +33,7 @@ public class Cliente {
                     System.out.println(respuesta);
                     if (respuesta.equals("Hasta luego")) {
                         break;
-                    }else if(respuesta.equals("Q.-Salir") || respuesta.equals("Ingresa la casilla que quieres jugar (ejemplo a0): ")){
+                    }else if(respuesta.equals("Q.-Salir") || respuesta.equals("Ingresa la casilla que quieres jugar (ejemplo a0): ") || respuesta.equals("Ingresa su nombre:")){
                         p.println(in.readLine());
                     }
                 }

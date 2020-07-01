@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class Servidor {
-    String dificultad="";
+    String dificultad="",nombre="";
     Socket  cliente; //Socket cliente
     PrintStream  p; //Canal de escritura
     BufferedReader  b; //Canal de Lectura
@@ -31,6 +31,8 @@ public class Servidor {
             p.println("Ingresa la dificultad\n1.-Principiante\n2.-Experto\nQ.-Salir");
             //Leo lo que escribio el socket cliente en el canal de lectura
             this.dificultad = b.readLine();
+            p.println("Ingresa su nombre:");
+            this.nombre=b.readLine();
             if(dificultad.equals("1")){
                 if(this.tab==null){
                     this.tab=new tablero(dificultad);
@@ -91,7 +93,7 @@ public class Servidor {
                 }
                 pideDificultad(sc);    
                 if(dificultad.equals("1")){
-                    nuevoCliente = new hiloServidor(sc,dificultad,tab,principiantes,numeroConexiones);
+                    nuevoCliente = new hiloServidor(sc,dificultad,tab,principiantes,numeroConexiones,nombre);
                     hilo=new Thread(principiantes,nuevoCliente);
                     //System.out.println("principiantes: "+conexionesActivasp);
                     if((conexionesActivasp)<numeroConexiones){
@@ -104,7 +106,7 @@ public class Servidor {
                     }
                 }
                 if(dificultad.equals("2")){
-                    nuevoCliente = new hiloServidor(sc,dificultad,tab16,expertos,numeroConexiones);
+                    nuevoCliente = new hiloServidor(sc,dificultad,tab16,expertos,numeroConexiones,nombre);
                     hiloexp=new Thread(expertos,nuevoCliente);
                     //System.out.println("expertos: "+conexionesActivase);
                     if((conexionesActivase)<numeroConexiones){

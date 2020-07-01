@@ -20,14 +20,16 @@ public class hiloServidor implements Runnable {
     tablero tab;
     boolean bandera=false;
     ThreadGroup grupo;
+    String nombre="";
 	
-	public hiloServidor(Socket socket,String d,tablero t,ThreadGroup g, int j){
+	public hiloServidor(Socket socket,String d,tablero t,ThreadGroup g, int j,String nombre){
 		this.cliente=socket;
 		this.tab=t;
 		this.dificultad=d;
         this.casillas=tab.casillas;
         this.grupo=g;
         this.numJugadores=j;
+        this.nombre=nombre;
         try{
             this.b = new BufferedReader ( new InputStreamReader  ( cliente.getInputStream() ) );
             this.p = new PrintStream  ( cliente.getOutputStream() );
@@ -123,6 +125,7 @@ public class hiloServidor implements Runnable {
         return false;
     }
 	public void run(){
+        String actual;
         //tab.addObserver(this);
         //imprimeTablero(tab.getTablero().toString());
         p.println("Bienvenido Espera tu turno\n");
@@ -135,6 +138,7 @@ public class hiloServidor implements Runnable {
                         p.println("Jugadores actualmente conectados: "+grupo.activeCount());
                         p.println("Jugadores necesarios para el inicio del juego: "+numJugadores);
                         bandera=true;
+                        tab.turnos.add(this.nombre);
                         tab.tablero.wait();
                         //tab.tablero.notify();
                     }
@@ -142,6 +146,7 @@ public class hiloServidor implements Runnable {
                         p.println("Hay un jugador antes que tu, por favor espera tu turno");
                         tab.tablero.notify();
                         bandera=true;
+                        tab.turnos.add(this.nombre);
                         tab.tablero.wait();
                     }
                     //tab.tablero.notify();
@@ -149,6 +154,15 @@ public class hiloServidor implements Runnable {
                         tab.tablero.notify();
                         break;
                     }
+                    if(grupo.activeCount()>1){
+                           actual= tab.turnos.peek();
+                        while(!actual.equals(this.nombre)){
+                            tab.tablero.notify();
+                            tab.tablero.wait();
+                            actual=tab.turnos.peek();
+                        }
+                    }
+                    tab.turnos.poll();
                     imprimeTablero();
                 	p.println("Ingresa la casilla que quieres jugar (ejemplo a0): ");
                 	mensaje=b.readLine();
@@ -156,6 +170,7 @@ public class hiloServidor implements Runnable {
                     	fin=LocalDateTime.now();
                     	p.println("Duración de la partida (HH:MM:SS): "+(fin.getHour()-inicio.getHour())+":"+(fin.getMinute()-inicio.getMinute())+":"+(fin.getSecond()-inicio.getSecond()));
                         tab.tablero.notify();
+                        tab.turnos.remove(this.nombre);
                     	break;
                     }else{
                 	    mensaje=validaJugada(mensaje);
@@ -163,7 +178,8 @@ public class hiloServidor implements Runnable {
                 	    {
                             fin=LocalDateTime.now();
                             p.println("Duración de la partida (HH:MM:SS): "+(fin.getHour()-inicio.getHour())+":"+(fin.getMinute()-inicio.getMinute())+":"+(fin.getSecond()-inicio.getSecond()));
-                    	    p.println(mensaje);                                
+                    	    p.println(mensaje);  
+                            tab.turnos.remove(this.nombre);                              
                             tab.tablero.notify();
                             break;
                 	    }
@@ -172,6 +188,7 @@ public class hiloServidor implements Runnable {
                             //System.out.println("Esto hay activo:"+this.activeCount());
                 	}
                     if(grupo.activeCount()>1){
+                        tab.turnos.add(this.nombre);
                         tab.tablero.wait();
                     }   
                 }

@@ -1,14 +1,17 @@
 import java.util.HashMap;
 import java.util.Arrays;
 import java.util.Observable;
+import java.util.LinkedList;
 public class tablero{
 	HashMap<String,String> tablero; //Tablero del juego
     HashMap<String,String> minas; //Posición de las minas dentro del tablero
     String dificultad;
     int casillas;
+    LinkedList<String> turnos;
 
 	public tablero(String d){
 		this.dificultad=d;
+        this.turnos= new LinkedList<String>();
 		creaMatriz();
 	}
 
